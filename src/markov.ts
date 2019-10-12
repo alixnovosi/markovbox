@@ -1,8 +1,9 @@
 import HolmesScarlett from "./HolmesScarlett";
 
 export class Markov {
-    private punctuation: string[] = [".", ",", "?", "!"];
+    private punctuation: string[] = [",", ";", ".", "?", "!"];
     public mark_dict: Map<string, string[]> = new Map();
+    public mark_keys: string[] = [];
 
     // return ending char if token ends in comma/period/something else
     // which logically should be special cased.
@@ -21,6 +22,7 @@ export class Markov {
     constructor() {
         for (let punct of this.punctuation) {
             this.mark_dict.set(punct, []);
+            this.mark_keys.push(punct);
         }
 
         // build markov dict.
@@ -60,6 +62,7 @@ export class Markov {
             // ensure we always have an entry for this token.
             if (!this.mark_dict.has(clean_token)) {
                 this.mark_dict.set(clean_token, []);
+                this.mark_keys.push(clean_token);
             }
 
             if (token_punct !== null) {
@@ -71,10 +74,6 @@ export class Markov {
                         // clean tokens we put in dict without punctuation.
                         clean_next_token
                     );
-
-                    if (clean_next_token === "on!") {
-                        console.log(`clean next is ${clean_next_token}`);
-                    }
                 }
 
                 current_entries = this.mark_dict.get(clean_token);
@@ -93,5 +92,31 @@ export class Markov {
                 }
             }
         }
+    }
+
+    public create_sentence(length: number): string {
+        // get a random word AFTER a punctuation character.
+        // so that we start a sensible sentence.
+        let i = Math.floor(Math.random() * (this.punctuation.length-2)) + 2;
+
+        let key = this.punctuation[i];
+        let entries = this.mark_dict.get(key);
+        key = entries[Math.floor(Math.random() * entries.length)];
+
+        let phrase: string = "";
+
+        // TODO keep going until a punctuation, or something.
+        while (phrase.length < length) {
+            if (this.punctuation.indexOf(key) !== -1) {
+                phrase += `${key}`;
+            } else {
+                phrase += ` ${key}`;
+            }
+
+            entries = this.mark_dict.get(key);
+            key = entries[Math.floor(Math.random() * entries.length)];
+        }
+
+        return phrase;
     }
 }

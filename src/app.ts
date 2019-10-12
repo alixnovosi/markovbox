@@ -8,7 +8,10 @@ class App {
     public setup(): void {
         this.markov = new Markov();
 
-        console.log(this.markov.mark_dict);
+        for (let i = 0; i < 10; i++) {
+            let sentence = this.markov.create_sentence(100);
+            console.log(sentence);
+        }
     }
 }
 
