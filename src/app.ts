@@ -4,13 +4,17 @@ import "./styles/main.scss";
 
 class App {
     private markov: Markov;
+    private base: HTMLElement;
 
     public setup(): void {
         this.markov = new Markov();
 
-        for (let i = 0; i < 10; i++) {
-            let sentence = this.markov.create_sentence(100);
+        this.base = <HTMLElement>document.getElementById("app");
+
+        for (let i = 0; i < 1; i++) {
+            let sentence = this.markov.create_text_block(800);
             console.log(sentence);
+            console.log(`sentence len is ${sentence.length}`);
         }
     }
 }
