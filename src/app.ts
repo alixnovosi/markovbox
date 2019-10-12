@@ -6,7 +6,9 @@ class App {
     private markov: Markov;
 
     public setup(): void {
-        this.markov = new Markov(32, 4712, "study_in_scarlett.txt");
+        this.markov = new Markov();
+
+        console.log(this.markov.mark_dict);
     }
 }
 
