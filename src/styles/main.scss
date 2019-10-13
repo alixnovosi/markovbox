@@ -1,7 +1,3 @@
-$border-color: #000011;
-$button-bg: #BBBBCC;
-$button-hover-bg: #DDDDEE;
-
 #app {
     align-items: stretch;
     display: flex;
@@ -12,71 +8,15 @@ $button-hover-bg: #DDDDEE;
     min-width: 900px;
     padding: 1em;
 
-    canvas {
-        border: 1px solid $border-color;
-        border-radius: 5px;
-    }
 }
 
-.sortControlsBox {
-    border: 1px solid $border-color;
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-    font-size: 14px;
-    margin: 0 0.5em;
+.hidden-text {
+    visibility: hidden;
+}
+
+.textbox {
+    color: #EEEEFF;
+    background-color: #222233;
+    border: 1px solid #555566;
     padding: 1em;
-
-    h5 {
-        font-size: 10px;
-    }
-}
-
-.dropdownContainer, .slideContainer, .radioContainer {
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 100%;
-
-    label, input {
-        padding: 0.25em 0;
-    }
-}
-
-.radioButtonRow {
-    align-items: center;
-    column-gap: 0.5em;
-    display: grid;
-    font-size: 12px;
-    grid-template-columns: 1fr 3fr 1fr 3fr;
-    row-gap: 0.6em;
-
-    input {
-        margin: 0 0.25em;
-    }
-}
-
-.statsContainer {
-    column-gap: 0.5em;
-    display: grid;
-    grid-template-columns: 1fr 3fr 2fr;
-    font-size: 12px;
-
-    .swatch {
-        height: 2em;
-        margin: auto auto;
-        width: 2em;
-    }
-}
-
-.warningBox {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-
-    h4 {
-        padding-right: 0.5em;
-    }
 }
