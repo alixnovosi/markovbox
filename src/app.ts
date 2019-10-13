@@ -7,11 +7,10 @@ import "./styles/main.scss";
 
 class App {
     private base: HTMLElement;
-    private textbox_elem: HTMLElement;
 
     private markov: Markov;
 
-    private textbox: TextBox;
+    private textbox: TextBox = null;
     private text_length: number = 500;
 
     private erd: ElementResizeDetector.Erd;
@@ -25,35 +24,40 @@ class App {
     constructor() {
         this.markov = new Markov();
 
-        this.base = document.getElementById("app") as HTMLElement;
-
-        // hold on to this so it can be cleaned up when we make new textboxes.
-        this.textbox_elem = document.createElement("div");
-        this.textbox_elem.classList.add("textbox");
-        this.textbox_elem.id = "markovbox";
-
-        this.base.appendChild(this.textbox_elem);
         this.erd = new ElementResizeDetector({
             callOnAdd: false,
             strategy: "scroll",
         });
+
+        this.base = document.getElementById("app") as HTMLElement;
+
+        let textbox_elem = document.createElement("div");
+        textbox_elem.classList.add("textbox");
+        textbox_elem.id = "markovbox";
+
+        this.base.appendChild(textbox_elem);
+
+        this.textbox = new TextBox(textbox_elem);
+
+        this.erd.listenTo(
+            document.getElementById("markovbox"),
+            this.resize_callback(),
+        );
     }
 
     public setup(): void {
-        console.log("setup ran");
-
         let text = this.markov.create_text_block(this.text_length);
-        this.textbox = new TextBox(this.textbox_elem, text);
 
-        this.erd.listenTo(this.textbox_elem, (element) => {
-            this.resize_callback(element.offsetHeight, element.offsetWidth);
-        });
+        this.textbox.set_text(text);
 
+        this.old_time = null;
         this.render(null);
     }
 
     // render as long as there's text left TO render.
     public render(timestamp: DOMHighResTimeStamp): void {
+        this.animation_frame_id = null;
+
         let dt: number = 0;
         if (timestamp && this.old_time) {
             dt = timestamp - this.old_time;
@@ -61,47 +65,34 @@ class App {
 
         let res = this.textbox.render_step(dt);
 
-        if (res) {
+        if (res && !this.animation_frame_id) {
             this.old_time = timestamp;
             this.animation_frame_id = window.requestAnimationFrame(this.render.bind(this));
         }
     }
 
-    // remove all children of textbox so it's ready to go again.
-    public clean_textbox_elem() {
-        this.erd.removeAllListeners(this.textbox_elem);
-
-        while (this.textbox_elem.firstChild) {
-            this.textbox_elem.removeChild(this.textbox_elem.firstChild);
-        }
-
-        this.textbox_elem.classList.add("textbox");
-        this.textbox_elem.id = "markovbox";
-    }
-
     // called in textbox when textbox is resized to new dimensions.
-    public resize_callback(height: number, width: number) {
-        console.log(`height ${height} width ${width}`);
+    public resize_callback(): (element: HTMLElement) => void {
+        return (element: HTMLElement) => {
+            // cancel animation and reset some stats.
+            if (this.animation_frame_id) {
+                window.cancelAnimationFrame(this.animation_frame_id);
+                this.animation_frame_id = null;
+            }
 
-        // cancel animation and reset some stats.
-        if (this.animation_frame_id) {
-            window.cancelAnimationFrame(this.animation_frame_id);
-            this.animation_frame_id = null;
+            // fudged.
+            let charwidth = 10;
+            let charheight = 15;
+
+            let padding = 15;
+
+            let rows = Math.floor((element.offsetHeight-(2*padding)) / charheight);
+            let cols = Math.floor((element.offsetWidth-(2*padding)) / charwidth);
+
+            this.text_length = rows * cols;
+
+            this.setup();
         }
-
-        this.old_time = null;
-
-        // fudged.
-        let charwidth = 10;
-        let charheight = 15;
-
-        let rows = Math.floor(height / charheight);
-        let cols = Math.floor(width / charwidth);
-
-        this.text_length = rows * cols;
-
-        this.clean_textbox_elem();
-        this.setup();
     }
 }
 
