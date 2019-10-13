@@ -1,7 +1,5 @@
 export class TextBox {
-    private base: HTMLElement;
-
-    private textbox: HTMLElement;
+    public textbox: HTMLElement;
     private text: string;
     private pointer: HTMLElement;
 
@@ -10,14 +8,9 @@ export class TextBox {
 
     private timer: number = 0;
 
-    constructor(base: HTMLElement, text: string) {
-        this.base = base;
+    constructor(textbox: HTMLElement, text: string) {
         this.text = text;
-
-        this.textbox = document.createElement("div");
-        this.textbox.classList.add("textbox");
-
-        this.base.appendChild(this.textbox);
+        this.textbox = textbox;
 
         // write all text as invisible spans.
         for (let i = 0; i < this.text.length; i++) {

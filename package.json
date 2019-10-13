@@ -3,7 +3,9 @@
     "version": "1.0.0",
     "description": "markov visualizer",
     "main": "index.ts",
-    "dependencies": {},
+    "dependencies": {
+        "element-resize-detector": "^1.1.15"
+    },
     "devDependencies": {
         "@babel/core": "^7.6.0",
         "@babel/plugin-proposal-class-properties": "^7.5.5",

@@ -121,10 +121,11 @@ export class Markov {
 
         // get a random word AFTER a punctuation character.
         // so that we start a sensible sentence.
-        let i = Math.floor(Math.random() * this.ending_punctuation.length);
+        let key = this.ending_punctuation[Math.floor(Math.random() *
+                                                     this.ending_punctuation.length)];
 
-        let key = this.ending_punctuation[i];
         let entries = this.mark_dict.get(key);
+
         key = entries[Math.floor(Math.random() * entries.length)];
 
         // run once because the loop will fail otherwise.
@@ -142,7 +143,13 @@ export class Markov {
             }
 
             entries = this.mark_dict.get(key);
-            key = entries[Math.floor(Math.random() * entries.length)];
+
+            // TODO a hack.
+            if (!entries || entries.length === 0) {
+                key = ".";
+            } else {
+                key = entries[Math.floor(Math.random() * entries.length)];
+            }
         }
 
         // don't forget to add trailing punctuation.
