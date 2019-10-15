@@ -6,9 +6,17 @@ export class Markov {
     public mark_dict: Map<string, string[]> = new Map();
     public mark_keys: string[] = [];
 
+    // words that naïve code might think have punctuation in them.
+    private fake_punctuation: string[] = ["Mr.", "Mrs."];
+
     // return ending char if token ends in comma/period/something else
     // which logically should be special cased.
     private ends_punct(token: string): string|null {
+        // catch fake punctuation.
+        if (this.fake_punctuation.indexOf(token) !== -1) {
+            return null;
+        }
+
         let token_length = token.length;
         let last = token[token_length-1];
         for (let punct of this.punctuation) {
@@ -27,7 +35,8 @@ export class Markov {
         }
 
         // build markov dict.
-        // order one for now.
+        let one_ago = null;
+        let two_ago = null;
         let tokens = new HolmesScarlett().tokens;
         let j = 1;
         for (let i = 0; i < tokens.length; i++, j++) {
@@ -36,6 +45,7 @@ export class Markov {
             // get next token or indicate we're at the end of the text.
             let next_token: string|null;
             let next_punct;
+
             // clean up next token as well.
             let clean_next_token: string;
             if (j < tokens.length) {
@@ -66,9 +76,12 @@ export class Markov {
                 this.mark_keys.push(clean_token);
             }
 
+            // TODO I think we can unify a lot of code in these two cases.
             if (token_punct !== null) {
                 // if we found punctuation,
                 // mark that the next token can come after that punctuation.
+
+                //////// FIRST ORDER ///////
                 let current_entries = this.mark_dict.get(token_punct);
                 if (next_token && current_entries.indexOf(next_token) === -1) {
                     this.mark_dict.get(token_punct).push(
@@ -77,10 +90,39 @@ export class Markov {
                     );
                 }
 
+                // mark that punctuation can come after current token.
                 current_entries = this.mark_dict.get(clean_token);
                 if (current_entries.indexOf(token_punct) === -1) {
                     current_entries.push(token_punct);
                 }
+
+                //////// SECOND ORDER ///////
+                //////// THIRD ORDER  ///////
+                // we also do second/third order here.
+                // we need to init the dictionary.
+                let punct_one = [one_ago, token_punct].join(" ");
+                let punct_two = [two_ago, one_ago, token_punct].join(" ");
+                if (one_ago) {
+                    if (!this.mark_dict.get(punct_one)) {
+                        this.mark_dict.set(punct_one, []);
+                        this.mark_keys.push(punct_one);
+                    }
+
+                    this.mark_dict.get(punct_one).push(clean_next_token);
+                }
+
+                if (two_ago) {
+                    if (!this.mark_dict.get(punct_two)) {
+                        this.mark_dict.set(punct_two, []);
+                        this.mark_keys.push(punct_two);
+                    }
+
+                    this.mark_dict.get(punct_two).push(clean_next_token);
+                }
+
+                // update one_ago, two_ago.
+                two_ago = one_ago;
+                one_ago = token_punct;
 
             } else {
                 // otherwise, add this token to the map if necessary and then
@@ -91,6 +133,42 @@ export class Markov {
                         clean_next_token
                     );
                 }
+
+                //////// SECOND ORDER ///////
+                //////// THIRD ORDER  ///////
+                // we also do second/third order here.
+                // we need to init the dictionary.
+                let this_and_one = [one_ago, clean_token].join(" ");
+                if (one_ago && !this.mark_dict.has(this_and_one)) {
+                    this.mark_dict.set(this_and_one, []);
+                    this.mark_keys.push(this_and_one);
+                }
+
+                let this_and_two = [two_ago, one_ago, clean_token].join(" ");
+                if (two_ago && !this.mark_dict.has(this_and_two)) {
+                    this.mark_dict.set(this_and_two, []);
+                    this.mark_keys.push(this_and_two);
+                }
+
+                if (one_ago) {
+                    if (!this.mark_dict.get(this_and_one)) {
+                        this.mark_dict.set(this_and_one, []);
+                    }
+
+                    this.mark_dict.get(this_and_one).push(clean_next_token);
+                }
+
+                if (two_ago) {
+                    if (!this.mark_dict.get(this_and_two)) {
+                        this.mark_dict.set(this_and_two, []);
+                    }
+
+                    this.mark_dict.get(this_and_two).push(clean_next_token);
+                }
+
+                // update one_ago, two_ago.
+                two_ago = one_ago;
+                one_ago = clean_token;
             }
         }
     }
@@ -119,6 +197,9 @@ export class Markov {
     public create_capped_sentence(): string {
         let out: string[] = [];
 
+        let two_ago = null;
+        let one_ago = null;
+
         // get a random word AFTER a punctuation character.
         // so that we start a sensible sentence.
         let key = this.ending_punctuation[Math.floor(Math.random() *
@@ -136,15 +217,29 @@ export class Markov {
         key = entries[Math.floor(Math.random() * entries.length)];
 
         while (this.ending_punctuation.indexOf(key) === -1) {
-            if (this.punctuation.indexOf(key) !== -1) {
-                out.push(`${key}`);
-            } else {
-                out.push(` ${key}`);
+            if (this.punctuation.indexOf(key) === -1) {
+                out.push(" ");
+            }
+            out.push(key);
+
+            entries = null;
+            // try third order, then two if that fails, then one.
+            if (two_ago && one_ago) {
+                entries = this.mark_dict.get([two_ago, one_ago, key].join(" "));
             }
 
-            entries = this.mark_dict.get(key);
+            if (one_ago && !entries) {
+                entries = this.mark_dict.get([one_ago, key].join(" "));
+            }
 
-            // TODO a hack.
+            if (!entries) {
+                entries = this.mark_dict.get(key);
+            }
+
+            two_ago = one_ago;
+            one_ago = key;
+
+            // TODO a hack to fail out if necessary.
             if (!entries || entries.length === 0) {
                 key = ".";
             } else {
@@ -153,36 +248,8 @@ export class Markov {
         }
 
         // don't forget to add trailing punctuation.
-        out.push(`${key}`);
+        out.push(key);
 
         return out.join("");
-    }
-
-    // create sentence hard-capped to a length.
-    // does not care if it ends in punctuation.
-    public create_sentence(length: number): string {
-        // get a random word AFTER a punctuation character.
-        // so that we start a sensible sentence.
-        let i = Math.floor(Math.random() * (this.punctuation.length-2)) + 2;
-
-        let key = this.punctuation[i];
-        let entries = this.mark_dict.get(key);
-        key = entries[Math.floor(Math.random() * entries.length)];
-
-        let phrase: string = "";
-
-        // TODO keep going until a punctuation, or something.
-        while (phrase.length < length) {
-            if (this.punctuation.indexOf(key) !== -1) {
-                phrase += `${key}`;
-            } else {
-                phrase += ` ${key}`;
-            }
-
-            entries = this.mark_dict.get(key);
-            key = entries[Math.floor(Math.random() * entries.length)];
-        }
-
-        return phrase;
     }
 }
