@@ -1,4 +1,5 @@
 import HolmesScarlett from "./HolmesScarlett";
+import HolmesAdventures from "./HolmesAdventures";
 
 export class Markov {
     private ending_punctuation: string[] = [".", "?", "!"];
@@ -37,7 +38,9 @@ export class Markov {
         // build markov dict.
         let one_ago = null;
         let two_ago = null;
-        let tokens = new HolmesScarlett().tokens;
+
+        // TODO normalize these at all.
+        let tokens = [...new HolmesAdventures().tokens, ...new HolmesScarlett().tokens];
         let j = 1;
         for (let i = 0; i < tokens.length; i++, j++) {
             let token = tokens[i];
