@@ -21,7 +21,6 @@ export class TextBox {
 
             if (!this.pointer) {
                 this.pointer = span;
-
             }
 
             // stick trailing whitespace in with the preceding character,
@@ -57,6 +56,7 @@ export class TextBox {
     // setter for text, which resets the textbox, too.
     public set_text(text: string): void {
         this.text = text;
+        this.pointer = null;
         this.clean_textbox_elem();
         this.draw_invisible_text();
     }

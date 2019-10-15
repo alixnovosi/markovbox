@@ -21,6 +21,9 @@ class App {
     // track animation id to cancel it.
     private animation_frame_id: number;
 
+    // to make sure we only schedule one redraw at once.
+    private redraw_in_progress = false;
+
     constructor() {
         this.markov = new Markov();
 
@@ -51,7 +54,6 @@ class App {
         this.textbox.set_text(text);
 
         this.old_time = null;
-        this.render(null);
     }
 
     // render as long as there's text left TO render.
@@ -74,6 +76,11 @@ class App {
     // called in textbox when textbox is resized to new dimensions.
     public resize_callback(): (element: HTMLElement) => void {
         return (element: HTMLElement) => {
+            if (this.redraw_in_progress) {
+                return;
+            }
+
+            this.redraw_in_progress = true;
             // cancel animation and reset some stats.
             if (this.animation_frame_id) {
                 window.cancelAnimationFrame(this.animation_frame_id);
@@ -86,17 +93,31 @@ class App {
 
             let padding = 15;
 
-            let rows = Math.floor((element.offsetHeight-(2*padding)) / charheight);
+            // do some loose row calculations,
+            // at every point estimating low so we ideally don't overshoot the box.
+            let rows = Math.floor((element.offsetHeight-(2*padding)) / charheight)-1;
             let cols = Math.floor((element.offsetWidth-(2*padding)) / charwidth);
+
+            let old_text_length = this.text_length;
 
             this.text_length = rows * cols;
 
-            this.setup();
+            // don't bother doing anything for unchanged length.
+            if (old_text_length !== this.text_length) {
+                this.setup();
+            } else {
+                this.text_length = old_text_length;
+            }
+
+            this.redraw_in_progress = false;
+            this.render(null);
         }
     }
 }
 
 window.onload = () => {
     let app = new App();
+
     app.setup();
+    app.render(null);
 }
