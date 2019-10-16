@@ -46,20 +46,39 @@ const config: webpack.Configuration = {
         ],
         splitChunks: {
             cacheGroups: {
-                styles: {
-                    name: "styles",
-                    test: /\.css$/,
+                default: false,
+                vendors: false,
+
+                // vendors chunk
+                vendor: {
                     chunks: "all",
+                    test: /node_modules/
+                },
+
+                common: {
+                    minChunks: 2,
+                    chunks: "all",
+                    reuseExistingChunk: true,
                     enforce: true,
+                },
+
+                adventures: {
+                    chunks: "all",
+                    test: "./src/HolmesAdventures.ts",
+                },
+
+                scarlett: {
+                    chunks: "all",
+                    test: "./src/HolmesScarlett.ts",
                 },
             },
         },
     },
 
     output: {
+        filename: isProduction ? "[name].[chunkHash].js" : "[name].js",
         path: path.resolve(__dirname, "./dist"),
         publicPath: "/dist/",
-        filename: isProduction ? "[name].[hash].js" : "[name].js",
     },
     performance: {
         hints: "warning",
