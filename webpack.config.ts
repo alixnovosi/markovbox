@@ -17,11 +17,17 @@ const config: webpack.Configuration = {
 
     devtool: isProduction? "source-map" : "eval-source-map",
 
+    stats: isProduction? "verbose": "errors-warnings",
+
     resolve: {
         extensions: [".ts", ".js", ".sass", ".css"],
     },
 
-    entry: "./src/app.ts",
+    entry: {
+        main: "./src/app.ts",
+        adventures: "./src/HolmesAdventures.ts",
+        scarlett: "./src/HolmesScarlett.ts",
+    },
 
     mode: isProduction ? "production": "development",
 
